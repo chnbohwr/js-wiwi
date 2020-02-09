@@ -2,6 +2,7 @@ import {https} from 'firebase-functions';
 import express from 'express';
 import cors from 'cors';
 import { lineMiddleware } from './lineUtils';
+import errorHandler from './errorHandler';
 
 import eventHandler from './eventHandler';
 
@@ -11,11 +12,8 @@ const app = express();
 app.use(cors({ origin: true }));
 
 app.post('/callback', lineMiddleware, (req, res) => {
-  Promise.all(req.body.events.map(eventHandler))
-  .then(()=>{
-    res.sendStatus(200);
-  })
-  .catch(console.error);
+  res.sendStatus(200);
+  Promise.all(req.body.events.map(eventHandler)).catch(errorHandler);
 });
 
 // Expose Express API as a single Cloud Function:
