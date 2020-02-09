@@ -27,6 +27,23 @@ const getSourceUserId = (source: EventSource): string => {
   return source.userId || 'can not find user id';
 }
 
+const getUserProfileBySource = (source: EventSource) => {
+  if (source.type === 'group' && source.userId) {
+    return lineClient.getGroupMemberProfile(source.groupId, source.userId);
+  } else if (source.type === 'room' && source.userId) {
+    return lineClient.getRoomMemberProfile(source.roomId, source.userId);
+  } else if (source.userId) {
+    return lineClient.getProfile(source.userId);
+  }
+  return Promise.reject(new Error('can not find user id'));
+}
+
+const getUserProfileById = (source: EventSource, userId: string) => {
+  const fakeSource = { ...source };
+  fakeSource.userId = userId;
+  return getUserProfileBySource(fakeSource);
+}
+
 exports.getQuestion = async (event: MessageEvent) => {
   console.log('in get question function');
   const document = fireStore.collection('quiz').doc(getFireStoreSource(event.source));
@@ -105,7 +122,7 @@ exports.answerQuestion = async (event: MessageEvent) => {
   const userAnswer = (event.message.text || '').substr(3, 99);
   if (userAnswer === rightAnswer) {
     document.delete().catch(console.error);
-    const profile = await lineClient.getProfile(event.source.userId);
+    const profile = await getUserProfileBySource(event.source);
     const rightMessage: TemplateMessage = {
       type: 'template',
       altText: `恭喜${profile.displayName}答對，獲得 100 積分`,
@@ -160,12 +177,17 @@ exports.showScore = async (event: MessageEvent) => {
   }
 
   const scoreData = dataInstance.data() || {};
-
-  const userProfiles = await Promise.all(Object.keys(scoreData).map(userId => lineClient.getProfile(userId)));
-  const textArr = userProfiles.map(userProfile => `${userProfile.displayName}: ${scoreData[userProfile.userId]} 分`);
-  const scoreMessage: TextMessage = {
-    type: 'text',
-    text: `公布積分🤣獲得一萬積分可以請你喝飲料\r\n${textArr.join('\r\n')}`,
+  try {
+    const userProfiles = await Promise.all(Object.keys(scoreData).map(userId => getUserProfileById(event.source, userId)));
+    const textArr = userProfiles
+      .filter(userProfile => userProfile.userId)
+      .map(userProfile => `${userProfile.displayName}: ${scoreData[userProfile.userId]} 分`);
+    const scoreMessage: TextMessage = {
+      type: 'text',
+      text: `公布積分🤣獲得一萬積分可以請你喝飲料\r\n${textArr.join('\r\n')}`,
+    }
+    return lineClient.replyMessage(event.replyToken, scoreMessage);
+  } catch (e) {
+    throw e;
   }
-  return lineClient.replyMessage(event.replyToken, scoreMessage);
 }
