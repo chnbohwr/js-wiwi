@@ -116,6 +116,11 @@ exports.answerQuestion = async (event: MessageEvent) => {
           type: 'message',
           label: '再出一題，我要挑戰',
           text: `出題`
+        },
+        {
+          type: 'message',
+          label: '查看大家積分',
+          text: `積分`
         }]
       }
     };
