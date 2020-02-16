@@ -1,0 +1,3 @@
+[submodule "javascript-questions-json"]
+	path = javascript-questions-json
+	url = git@github.com:chnbohwr/javascript-questions-json.git
