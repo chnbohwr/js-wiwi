@@ -1,20 +1,10 @@
-import {https} from 'firebase-functions';
-import express from 'express';
-import cors from 'cors';
-import { lineMiddleware } from './lineUtils';
+import { https, Response } from 'firebase-functions';
 import errorHandler from './errorHandler';
 
 import eventHandler from './eventHandler';
 
-const app = express();
-
-// Automatically allow cross-origin requests
-app.use(cors({ origin: true }));
-
-app.post('/callback', lineMiddleware, (req, res) => {
-  res.sendStatus(200);
-  Promise.all(req.body.events.map(eventHandler)).catch(errorHandler);
+export const callback = https.onRequest((request: https.Request, response: Response) => {
+  // console.log(request.body.events[0]);
+  Promise.all(request.body.events.map(eventHandler)).catch(errorHandler)
+  response.sendStatus(200);
 });
-
-// Expose Express API as a single Cloud Function:
-export const widgets = https.onRequest(app);
