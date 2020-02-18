@@ -5,6 +5,7 @@ import eventHandler from './eventHandler';
 
 export const callback = https.onRequest((request: https.Request, response: Response) => {
   // console.log(request.body.events[0]);
-  Promise.all(request.body.events.map(eventHandler)).catch(errorHandler)
-  response.sendStatus(200);
+  Promise.all(request.body.events.map(eventHandler)).then(() => {
+    response.sendStatus(200);
+  }).catch(errorHandler)
 });

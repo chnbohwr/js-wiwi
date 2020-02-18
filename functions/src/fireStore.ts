@@ -1,7 +1,7 @@
-console.time('initial firestore');
 import * as admin from 'firebase-admin';
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
-console.timeEnd('initial firestore');
+//*important: trigger firestore  improve cold start performance
+admin.firestore().listCollections().then().catch();
 export default admin.firestore();
