@@ -8,7 +8,7 @@ type RSSItem = {
 }
 
 const jsRecommend = async (event: ReplyableEvent) => {
-  const helloText = '😂JS-WIWI 來為您推薦文章😂\n系統每半天抓取一次，所以大概半天抽一次才有不同的可以看\n\n'
+  const helloText = '😂JS-WIWI 推薦文章😂\n系統每半天抓取一次，所以大概半天抽一次才有不同的可以看\n\n'
   console.time('get rss feed');
   let feed = await toJson('https://rsshub.app/juejin/category/frontend');
   const echo: TextMessage = {
