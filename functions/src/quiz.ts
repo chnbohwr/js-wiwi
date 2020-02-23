@@ -1,10 +1,12 @@
 import * as admin from 'firebase-admin';
 import { EventSource, TemplateMessage, TextMessage, MessageEvent, } from '@line/bot-sdk';
 // import quizJson from './quiz.json';
-import questionJson from 'questionDist/question.json';
+import questionJson from './question.json';
 import fireStore from './fireStore';
 import { lineClient } from './lineUtils';
-import { generateTemplate } from './flexTemplate';
+import { generateQuestionTemplate, generateAnswerTemplate } from './flexTemplate';
+
+console.log(questionJson.length);
 
 // const shuffle = (array: Array<any>) => {
 //   for (let i = array.length - 1; i > 0; i--) {
@@ -62,7 +64,7 @@ exports.getQuestion = async (event: MessageEvent) => {
   const randomQuestion = Object.assign({}, questionJson[Math.floor(Math.random() * questionJson.length)]);
   // save now question to database
   // randomQuestion.o = shuffle(randomQuestion.o);
-  const gameMessage = generateTemplate(randomQuestion);
+  const gameMessage = generateQuestionTemplate(randomQuestion);
   console.log('generate question done');
   return lineClient.replyMessage(event.replyToken, gameMessage)
     .then(() => document.set({ quizId: randomQuestion.id }));
@@ -109,28 +111,11 @@ exports.answerQuestion = async (event: MessageEvent) => {
   const quizId = (dbQuizData.data() || {}).quizId;
   const question = questionJson.find(quizData => quizData.id === quizId) || questionJson[0];
   const rightAnswer = question.answer;
-  const userAnswer = question.options.indexOf((event.message.text || '').substr(3, 99));
+  const userAnswer = question.options.map(optionText=>optionText[0]).indexOf((event.message.text || '').substr(3, 99));
   if (userAnswer === rightAnswer) {
     document.delete().catch(console.error);
     const profile = await getUserProfileBySource(event.source);
-    const rightMessage: TemplateMessage = {
-      type: 'template',
-      altText: `恭喜${profile.displayName}答對，獲得 100 積分`,
-      template: {
-        type: 'buttons',
-        text: `恭喜${profile.displayName}答對，獲得 100 積分`,
-        actions: [{
-          type: 'message',
-          label: '再出一題，我要挑戰',
-          text: `出題`
-        },
-        {
-          type: 'message',
-          label: '查看大家積分',
-          text: `積分`
-        }]
-      }
-    };
+    const rightMessage = generateAnswerTemplate(profile.displayName, question.desc);
     updateScore(event).catch(console.error);
     return lineClient.replyMessage(event.replyToken, rightMessage);
   }

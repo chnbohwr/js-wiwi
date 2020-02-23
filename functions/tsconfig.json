@@ -9,10 +9,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "baseUrl": ".",
-    "paths": {
-      "questionDist/*": ["../javascript-questions-json/dist/*"]
-    }
+    "baseUrl": "./src/"
   },
   "compileOnSave": true,
   "include": [
