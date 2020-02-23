@@ -22,7 +22,8 @@ export const generateQuestionTemplate = (questionData: Question):FlexMessage => 
           "text": questionData.title,
           "size": "md",
           "weight": "bold",
-          "color": "#ffffff"
+          "color": "#ffffff",
+          "wrap": true,
         }
       ],
       "backgroundColor": "#79bac1"
@@ -79,7 +80,7 @@ export const generateQuestionTemplate = (questionData: Question):FlexMessage => 
   }
   const flexMessage: FlexMessage = {
     type: 'flex',
-    altText: '看來你的裝置沒有辦法顯示我的訊息，要不要用手機瞧瞧',
+    altText: '問題開始搶答摟，趕快點進來回答問題吧！！',
     contents: flexBubble
   }
   // console.log(flexMessage)
@@ -162,7 +163,7 @@ export const generateAnswerTemplate = (displayName: string, desc: string):FlexMe
   }
   const flexMessage: FlexMessage = {
     type: 'flex',
-    altText: '看來你的裝置沒有辦法顯示我的訊息，要不要用手機瞧瞧',
+    altText: `恭喜${displayName}答對，點進來看看解答吧`,
     contents: flexBubble
   }
   return flexMessage;
