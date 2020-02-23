@@ -1,16 +1,18 @@
 import * as admin from 'firebase-admin';
-import quizJson from './quiz.json';
+import { EventSource, TemplateMessage, TextMessage, MessageEvent, } from '@line/bot-sdk';
+// import quizJson from './quiz.json';
+import questionJson from 'questionDist/question.json';
 import fireStore from './fireStore';
 import { lineClient } from './lineUtils';
-import { EventSource, TemplateMessage, TextMessage, MessageEvent, } from '@line/bot-sdk';
+import { generateTemplate } from './flexTemplate';
 
-const shuffle = (array: Array<any>) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
+// const shuffle = (array: Array<any>) => {
+//   for (let i = array.length - 1; i > 0; i--) {
+//     const j = Math.floor(Math.random() * (i + 1));
+//     [array[i], array[j]] = [array[j], array[i]];
+//   }
+//   return array;
+// }
 
 const getFireStoreSource = (source: EventSource) => {
   switch (source.type) {
@@ -57,22 +59,10 @@ exports.getQuestion = async (event: MessageEvent) => {
   }
   console.log('check question status done');
   // firestore add question id
-  const randomQuestion = Object.assign({}, quizJson[Math.floor(Math.random() * quizJson.length)]);
+  const randomQuestion = Object.assign({}, questionJson[Math.floor(Math.random() * questionJson.length)]);
   // save now question to database
-  randomQuestion.o = shuffle(randomQuestion.o);
-  const gameMessage: TemplateMessage = {
-    type: 'template',
-    altText: `題目類型:${randomQuestion.c}\r\n${randomQuestion.q}\r\n${randomQuestion.o.toString()}`,
-    template: {
-      type: 'buttons',
-      text: `題目類型:${randomQuestion.c}\r\n${randomQuestion.q}\r\n\r\n點選下方按鈕回答！！`,
-      actions: randomQuestion.o.map(questionText => ({
-        type: 'message',
-        label: questionText,
-        text: `回答:${questionText}`
-      }))
-    }
-  };
+  // randomQuestion.o = shuffle(randomQuestion.o);
+  const gameMessage = generateTemplate(randomQuestion);
   console.log('generate question done');
   return lineClient.replyMessage(event.replyToken, gameMessage)
     .then(() => document.set({ quizId: randomQuestion.id }));
@@ -117,9 +107,9 @@ exports.answerQuestion = async (event: MessageEvent) => {
     return lineClient.replyMessage(event.replyToken, outMessage);
   }
   const quizId = (dbQuizData.data() || {}).quizId;
-  const question = quizJson.find(quizData => quizData.id === quizId) || quizJson[0];
-  const rightAnswer = question.o[0];
-  const userAnswer = (event.message.text || '').substr(3, 99);
+  const question = questionJson.find(quizData => quizData.id === quizId) || questionJson[0];
+  const rightAnswer = question.answer;
+  const userAnswer = question.options.indexOf((event.message.text || '').substr(3, 99));
   if (userAnswer === rightAnswer) {
     document.delete().catch(console.error);
     const profile = await getUserProfileBySource(event.source);
